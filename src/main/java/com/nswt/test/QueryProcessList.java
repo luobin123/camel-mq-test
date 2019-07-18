@@ -100,4 +100,5 @@ public class QueryProcessList {
 
         return sdf.format(date);
     }
+
 }
