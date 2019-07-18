@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//Apache//DTD Log4j 1.2//EN"
+        "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd">
+<log4j:configuration>
+    <appender class="org.apache.log4j.ConsoleAppender" name="RootConsoleAppender">
+        <param name="Threshold" value="debug,info"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value=" [%-d{yyyy-MM-dd HH:mm:ss.SSS}] [%p] [%C{1}:%L] [%t] %m%n"/>
+        </layout>
+    </appender>
+
+    <appender name="fileAppenderInfo" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="File" value="logs/all.log" />
+        <param name="DatePattern" value=".yyyy-MM-dd" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+        </layout>
+    </appender>
+    <root>
+        <level value="info"/>
+        <!--<appender-ref ref="RootConsoleAppender"/>-->
+        <appender-ref ref="fileAppenderInfo"/>
+    </root>
+
+</log4j:configuration>

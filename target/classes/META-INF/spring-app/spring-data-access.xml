@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+          init-method="init" destroy-method="close">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url"
+                  value="jdbc:mysql://${jdbc.host}/${jdbc.database}?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull&amp;useSSL=false"/>
+
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+
+        <property name="initialSize" value="${jdbc.initialSize}"/>
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+        <property name="maxActive" value="${jdbc.maxActive}"/>
+        <property name="defaultTransactionIsolation" value="2"/>
+        <property name="defaultAutoCommit" value="false"/>
+
+        <!--
+        获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，
+        如果需要可以通过配置useUnfairLock属性为true使用非公平锁。
+        -->
+        <property name="maxWait" value="60000"/>
+
+        <property name="validationQuery" value="SELECT 1"/>
+
+        <!-- 建议配置为true，不影响性能，并且保证安全性。-->
+        <property name="testWhileIdle" value="true"/>
+        <!--
+        申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+        -->
+        <property name="testOnBorrow" value="true"/>
+        <!-- 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。 -->
+        <property name="testOnReturn" value="false"/>
+
+        <!--
+        是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭。
+        -->
+        <property name="poolPreparedStatements" value="false"/>
+
+        <!-- 定时输出统计信息到日志中: ms -->
+        <property name="timeBetweenLogStatsMillis" value="600000"/>
+
+        <property name="proxyFilters">
+            <list>
+                <ref bean="statFilter"/>
+                <ref bean="logFilter"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="logFilter" class="com.caair.soc.ods.monitor.druid.CustomSlf4jLogFilter">
+    </bean>
+
+    <bean id="statFilter" class="com.alibaba.druid.filter.stat.StatFilter">
+        <property name="slowSqlMillis" value="200"/>
+        <property name="logSlowSql" value="true"/>
+    </bean>
+
+    <bean id="uuidPlugin" class="org.iff.infra.util.mybatis.plugin.UUIDPlugin"/>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.foreveross.system,com.caair.soc.message"/>
+        <property name="annotationClass" value="org.iff.infra.util.mybatis.mapper.Mapper"/>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:/com/caair/soc/ods/monitor/mybatis-config.xml"/>
+        <property name="typeAliasesPackage" value="com.foreveross.system,com.caair.soc.message"/>
+
+        <property name="plugins">
+            <array>
+                <ref bean="uuidPlugin"/>
+            </array>
+        </property>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:/com/foreveross/*/domain/**/*Mapper-mysql.xml</value>
+                <value>classpath*:/com/caair/soc/message/domain/**/*Mapper-mysql.xml</value>
+                <value>classpath*:/com/caair/soc/ods/monitor/**/*Mapper-mysql.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager" primary="true">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" primary="true">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+
+    <bean id="sqlSessionBatchMode" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+        <constructor-arg index="1" value="BATCH" />
+    </bean>
+
+    <bean id="tcRepositoryService" class="org.iff.infra.util.mybatis.service.impl.MybatisRepositoryServiceImpl"/>
+</beans>
